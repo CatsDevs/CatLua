@@ -1,0 +1,7 @@
+name = "luahub-oauth"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Секреты (client_id можно и сюда, но проще тоже через secret put):
+#   wrangler secret put GITHUB_CLIENT_ID
+#   wrangler secret put GITHUB_CLIENT_SECRET
