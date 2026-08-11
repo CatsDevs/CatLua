@@ -390,6 +390,140 @@ const CONFIG = {
 };
 
 /* =========================================================
+   ПЕРЕВОДЫ / i18n
+   ========================================================= */
+const LANG = (navigator.language || "en").toLowerCase().startsWith("ru") ? "ru" : "en";
+
+const I18N = {
+  ru: {
+    filesTitle: "Файлы",
+    subtitle: "— скрипты для Roblox Studio",
+    repoLabel: "Репозиторий:",
+    logout: "Выйти",
+    login: "Войти через GitHub",
+    filesHeading: "Файлы (.lua)",
+    newFilePlaceholder: "имя.lua",
+    searchPlaceholder: "Поиск по файлам…",
+    gateTitle: "Подключите GitHub-репозиторий",
+    gateDesc: "Войдите через GitHub, выберите репозиторий — и редактируйте .lua файлы прямо здесь. Каждое сохранение коммитится в репозиторий, а для каждого файла доступна raw-ссылка для loadstring в Roblox Studio.",
+    fileLabel: "Файл:",
+    pause: "Пауза",
+    resume: "Возобновить",
+    delete: "Удалить",
+    loadstring: "Loadstring",
+    save: "Сохранить",
+    lsTitle: "Строка для Roblox Studio",
+    lsDesc: "Вставь в Command Bar или в плагин — подтянет актуальный код из репозитория (ветка {branch}).",
+    copy: "Скопировать",
+    copied: "Скопировано!",
+    close: "Закрыть",
+    noFiles: "Файлов пока нет",
+    noResults: "Ничего не найдено",
+    loading: "Загрузка…",
+    loaded: "Загружено",
+    loadError: "Ошибка загрузки: {msg}",
+    unsavedStatus: "Есть несохранённые изменения",
+    saving: "Сохранение…",
+    saved: "Сохранено ✓",
+    saveError: "Ошибка сохранения: {msg}",
+    creatingFile: "Создание файла…",
+    createError: "Ошибка создания: {msg}",
+    resuming: "Восстановление…",
+    pausing: "Ставим на паузу…",
+    resumed: "Файл восстановлен",
+    paused: "Файл на паузе",
+    genericError: "Ошибка: {msg}",
+    deleting: "Удаление…",
+    deleteError: "Ошибка удаления: {msg}",
+    noFilesLeft: "Файлов не осталось — создайте новый слева",
+    noLuaFiles: "В этом репозитории пока нет .lua файлов — создайте новый слева",
+    noRepos: "У вас нет доступных репозиториев",
+    authorizing: "Авторизация…",
+    loadingAccount: "Загрузка аккаунта…",
+    loadingFiles: "Загрузка файлов…",
+    authError: "Ошибка авторизации: {msg}",
+    confirmSwitchFile: "Есть несохранённые изменения. Открыть другой файл без сохранения?",
+    confirmDelete: 'Удалить файл "{path}" безвозвратно?',
+  },
+  en: {
+    filesTitle: "Files",
+    subtitle: "— Lua scripts editor for Roblox Studio",
+    repoLabel: "Repository:",
+    logout: "Log out",
+    login: "Sign in with GitHub",
+    filesHeading: "Files (.lua)",
+    newFilePlaceholder: "name.lua",
+    searchPlaceholder: "Search files…",
+    gateTitle: "Connect a GitHub repository",
+    gateDesc: "Sign in with GitHub, pick a repository — and edit .lua files right here. Every save commits to the repository, and each file gets a raw link for loadstring in Roblox Studio.",
+    fileLabel: "File:",
+    pause: "Pause",
+    resume: "Resume",
+    delete: "Delete",
+    loadstring: "Loadstring",
+    save: "Save",
+    lsTitle: "Roblox Studio snippet",
+    lsDesc: "Paste into the Command Bar or a plugin — it pulls the current code from the repository (branch {branch}).",
+    copy: "Copy",
+    copied: "Copied!",
+    close: "Close",
+    noFiles: "No files yet",
+    noResults: "No results",
+    loading: "Loading…",
+    loaded: "Loaded",
+    loadError: "Load error: {msg}",
+    unsavedStatus: "Unsaved changes",
+    saving: "Saving…",
+    saved: "Saved ✓",
+    saveError: "Save error: {msg}",
+    creatingFile: "Creating file…",
+    createError: "Create error: {msg}",
+    resuming: "Restoring…",
+    pausing: "Pausing…",
+    resumed: "File restored",
+    paused: "File paused",
+    genericError: "Error: {msg}",
+    deleting: "Deleting…",
+    deleteError: "Delete error: {msg}",
+    noFilesLeft: "No files left — create a new one on the left",
+    noLuaFiles: "This repository has no .lua files yet — create one on the left",
+    noRepos: "You have no available repositories",
+    authorizing: "Authorizing…",
+    loadingAccount: "Loading account…",
+    loadingFiles: "Loading files…",
+    authError: "Authorization error: {msg}",
+    confirmSwitchFile: "You have unsaved changes. Open another file without saving?",
+    confirmDelete: 'Delete "{path}" permanently?',
+  },
+};
+
+function t(key, vars) {
+  let s = (I18N[LANG] && I18N[LANG][key]) || I18N.en[key] || key;
+  if (vars) for (const k in vars) s = s.replace(`{${k}}`, vars[k]);
+  return s;
+}
+
+function applyStaticI18n() {
+  document.documentElement.lang = LANG;
+  $("#btn-menu").title = t("filesTitle");
+  document.querySelector(".brand .hub").textContent = "\u00A0" + t("subtitle");
+  document.querySelector("#repo-controls span").textContent = t("repoLabel");
+  $("#btn-logout").textContent = t("logout");
+  $("#btn-login").textContent = t("login");
+  document.querySelector(".aside-head span").textContent = t("filesHeading");
+  $("#new-file-name").placeholder = t("newFilePlaceholder");
+  $("#file-search").placeholder = t("searchPlaceholder");
+  document.querySelector(".editor-bar .path").firstChild.textContent = t("fileLabel") + " ";
+  $("#btn-delete").textContent = t("delete");
+  $("#btn-loadstring").textContent = t("loadstring");
+  $("#btn-save").textContent = t("save");
+  document.querySelector("#ls-modal h3").textContent = t("lsTitle");
+  $("#btn-copy-ls").textContent = t("copy");
+  $("#btn-close-ls").textContent = t("close");
+  updatePauseButton();
+}
+
+/* =========================================================
    STATE
    ========================================================= */
 let state = {
@@ -428,7 +562,7 @@ async function handleOAuthRedirect() {
   url.searchParams.delete("state");
   window.history.replaceState({}, "", url.pathname);
 
-  setGate("Авторизация…");
+  setGate(t("authorizing"));
   try {
     const res = await fetch(CONFIG.TOKEN_EXCHANGE_URL, {
       method: "POST",
@@ -455,7 +589,7 @@ async function handleOAuthRedirect() {
     localStorage.setItem("gh_token", state.token);
     await afterLogin();
   } catch (e) {
-    setGate("Ошибка авторизации: " + e.message);
+    setGate(t("authError", { msg: e.message }));
   }
 }
 
@@ -504,7 +638,10 @@ async function loadFiles() {
     return;
   }
   state.files = (tree.tree || []).filter(
-    (item) => item.type === "blob" && item.path.toLowerCase().endsWith(".lua")
+    (item) =>
+      item.type === "blob" &&
+      item.path.toLowerCase().endsWith(".lua") &&
+      item.path !== MARKER_FILE
   );
 }
 
@@ -606,7 +743,7 @@ async function afterLogin() {
   if (state.repos.length) {
     await selectRepo(state.repos[0].full_name);
   } else {
-    setGate("У вас нет доступных репозиториев");
+    setGate(t("noRepos"));
   }
 }
 
@@ -614,14 +751,14 @@ async function selectRepo(fullName) {
   const repoMeta = state.repos.find((r) => r.full_name === fullName);
   const [owner, name] = fullName.split("/");
   state.currentRepo = { owner, name, defaultBranch: repoMeta.default_branch || "main" };
-  setGate("Загрузка файлов…");
+  setGate(t("loadingFiles"));
   await loadFiles();
   await ensureMarkerFile();
   renderFileList();
   if (state.files.length) {
     openFile(state.files[0].path);
   } else {
-    setGate("В этом репозитории пока нет .lua файлов — создайте новый слева");
+    setGate(t("noLuaFiles"));
   }
 }
 
@@ -647,11 +784,11 @@ function renderFileList() {
     : state.files;
 
   if (!state.files.length) {
-    list.innerHTML = `<div style="padding:10px; color:var(--text-dim); font-size:12.5px;">Файлов пока нет</div>`;
+    list.innerHTML = `<div style="padding:10px; color:var(--text-dim); font-size:12.5px;">${t("noFiles")}</div>`;
     return;
   }
   if (!filtered.length) {
-    list.innerHTML = `<div style="padding:10px; color:var(--text-dim); font-size:12.5px;">Ничего не найдено</div>`;
+    list.innerHTML = `<div style="padding:10px; color:var(--text-dim); font-size:12.5px;">${t("noResults")}</div>`;
     return;
   }
   list.innerHTML = filtered
@@ -671,7 +808,7 @@ function markActiveFile(path) {
 }
 
 async function openFile(path) {
-  if (state.dirty && !confirm("Есть несохранённые изменения. Открыть другой файл без сохранения?")) {
+  if (state.dirty && !confirm(t("confirmSwitchFile"))) {
     return;
   }
   if (window.innerWidth <= 760) closeSidebar();
@@ -679,7 +816,7 @@ async function openFile(path) {
   $("#editor-shell").style.display = "flex";
   $("#current-path").textContent = path;
   markActiveFile(path);
-  setStatus("Загрузка…", "");
+  setStatus(t("loading"), "");
 
   try {
     const { content, sha } = await loadFileContent(path);
@@ -688,27 +825,27 @@ async function openFile(path) {
     $("#btn-save").disabled = true;
     setEditorContent(content);
     updatePauseButton();
-    setStatus("Загружено", "ok");
+    setStatus(t("loaded"), "ok");
   } catch (e) {
-    setStatus("Ошибка загрузки: " + e.message, "err");
+    setStatus(t("loadError", { msg: e.message }), "err");
   }
 }
 
 async function saveCurrentFile() {
   if (!state.currentFile) return;
-  setStatus("Сохранение…", "");
+  setStatus(t("saving"), "");
   $("#btn-save").disabled = true;
   try {
     const content = state.editor.getValue();
     const result = await saveFileContent(state.currentFile.path, content, state.currentFile.sha);
     state.currentFile.sha = result.content.sha;
     state.dirty = false;
-    setStatus("Сохранено ✓", "ok");
+    setStatus(t("saved"), "ok");
     // обновим sha в списке файлов на всякий случай
     const f = state.files.find((f) => f.path === state.currentFile.path);
     if (f) f.sha = result.content.sha;
   } catch (e) {
-    setStatus("Ошибка сохранения: " + e.message, "err");
+    setStatus(t("saveError", { msg: e.message }), "err");
     $("#btn-save").disabled = false;
   }
 }
@@ -725,7 +862,7 @@ async function createNewFile() {
   if (!name.endsWith(".lua")) name += ".lua";
   if (!state.currentRepo) return;
 
-  setStatus("Создание файла…", "");
+  setStatus(t("creatingFile"), "");
   try {
     await saveFileContent(name, `-- ${name}\n`, null);
     $("#new-file-name").value = "";
@@ -733,14 +870,14 @@ async function createNewFile() {
     renderFileList();
     openFile(name);
   } catch (e) {
-    setStatus("Ошибка создания: " + e.message, "err");
+    setStatus(t("createError", { msg: e.message }), "err");
   }
 }
 
 function updatePauseButton() {
   const btn = $("#btn-pause");
   if (!state.currentFile) return;
-  btn.textContent = state.currentFile.paused ? "Возобновить" : "Пауза";
+  btn.textContent = state.currentFile.paused ? t("resume") : t("pause");
 }
 
 async function togglePauseCurrentFile() {
@@ -748,7 +885,7 @@ async function togglePauseCurrentFile() {
   const { path, sha, paused } = state.currentFile;
   const btn = $("#btn-pause");
   btn.disabled = true;
-  setStatus(paused ? "Восстановление…" : "Ставим на паузу…", "");
+  setStatus(paused ? t("resuming") : t("pausing"), "");
   try {
     if (paused) {
       await resumeFile(path, sha);
@@ -757,9 +894,9 @@ async function togglePauseCurrentFile() {
       await pauseFile(path, sha, currentContent);
     }
     await openFile(path); // перезагружаем файл, чтобы подтянуть новое sha и содержимое
-    setStatus(paused ? "Файл восстановлен" : "Файл на паузе", "ok");
+    setStatus(paused ? t("resumed") : t("paused"), "ok");
   } catch (e) {
-    setStatus("Ошибка: " + e.message, "err");
+    setStatus(t("genericError", { msg: e.message }), "err");
   } finally {
     btn.disabled = false;
   }
@@ -768,8 +905,8 @@ async function togglePauseCurrentFile() {
 async function deleteCurrentFile() {
   if (!state.currentFile) return;
   const { path, sha } = state.currentFile;
-  if (!confirm(`Удалить файл "${path}" безвозвратно?`)) return;
-  setStatus("Удаление…", "");
+  if (!confirm(t("confirmDelete", { path }))) return;
+  setStatus(t("deleting"), "");
   try {
     await deleteFileContent(path, sha);
     // на всякий случай подчищаем и бэкап, если он был
@@ -781,10 +918,10 @@ async function deleteCurrentFile() {
     if (state.files.length) {
       openFile(state.files[0].path);
     } else {
-      setGate("Файлов не осталось — создайте новый слева");
+      setGate(t("noFilesLeft"));
     }
   } catch (e) {
-    setStatus("Ошибка удаления: " + e.message, "err");
+    setStatus(t("deleteError", { msg: e.message }), "err");
   }
 }
 
@@ -793,7 +930,7 @@ function showLoadstring() {
   const { owner, name, defaultBranch } = state.currentRepo;
   const raw = `https://raw.githubusercontent.com/${owner}/${name}/${defaultBranch}/${state.currentFile.path}`;
   const snippet = `loadstring(game:HttpGet("${raw}"))()`;
-  $("#ls-branch").textContent = defaultBranch;
+  document.querySelector("#ls-modal .modal p").textContent = t("lsDesc", { branch: defaultBranch });
   $("#ls-code").textContent = snippet;
   $("#ls-modal").classList.add("show");
 }
@@ -884,10 +1021,13 @@ window.addEventListener("beforeunload", (e) => {
    INIT
    ========================================================= */
 initEditor();
+applyStaticI18n();
+$("#gate h1").textContent = t("gateTitle");
+$("#gate p").textContent = t("gateDesc");
 (async function init() {
   await handleOAuthRedirect();
   if (state.token) {
-    setGate("Загрузка аккаунта…");
+    setGate(t("loadingAccount"));
     try {
       await afterLogin();
     } catch (e) {
