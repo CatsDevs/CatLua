@@ -374,7 +374,13 @@ async function handleOAuthRedirect() {
       throw new Error(`Worker вернул не-JSON (статус ${res.status}): ${rawText.slice(0, 200)}`);
     }
     if (!data.access_token) {
-      throw new Error(`(статус ${res.status}) ${data.error || "Не удалось получить токен"}`);
+      const debugInfo = [
+        data.debug_status ? `worker→github статус: ${data.debug_status}` : null,
+        data.debug_body ? `тело ответа: ${data.debug_body}` : null,
+        "debug_client_id_present" in data ? `client_id передан: ${data.debug_client_id_present}` : null,
+        "debug_client_secret_present" in data ? `client_secret передан: ${data.debug_client_secret_present}` : null,
+      ].filter(Boolean).join(" | ");
+      throw new Error(`(статус ${res.status}) ${data.error || "Не удалось получить токен"}${debugInfo ? " — " + debugInfo : ""}`);
     }
     state.token = data.access_token;
     localStorage.setItem("gh_token", state.token);
