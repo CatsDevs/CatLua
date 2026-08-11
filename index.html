@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LuaHub — редактор скриптов для Roblox Studio</title>
+<title>CatLua — редактор скриптов для Roblox Studio</title>
 <style>
   :root{
     --bg:#0d1117;
@@ -313,7 +313,7 @@
 <header>
   <div style="display:flex; align-items:center; min-width:0;">
     <button class="btn-menu" id="btn-menu" title="Файлы">☰</button>
-    <div class="brand"><span class="dot"></span>LuaHub<span class="hub">&nbsp;— скрипты для Roblox Studio</span></div>
+    <div class="brand"><span class="dot"></span>CatLua<span class="hub">&nbsp;— скрипты для Roblox Studio</span></div>
   </div>
   <div class="repo-select" id="repo-controls" style="display:none;">
     <span>Репозиторий:</span>
@@ -515,7 +515,7 @@ async function loadFileContent(path) {
 async function saveFileContent(path, content, sha) {
   const { owner, name, defaultBranch } = state.currentRepo;
   const body = {
-    message: `Обновление ${path} через LuaHub`,
+    message: `Обновление ${path} через CatLua`,
     content: btoa(unescape(encodeURIComponent(content))),
     branch: defaultBranch,
   };
