@@ -247,12 +247,74 @@
   ::-webkit-scrollbar{width:9px; height:9px;}
   ::-webkit-scrollbar-thumb{background:#262e39; border-radius:5px;}
   ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ===== Mobile ===== */
+  .btn-menu{
+    display:none;
+    background:transparent;
+    border:1px solid var(--border);
+    border-radius:6px;
+    width:34px; height:34px;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    flex:none;
+    margin-right:4px;
+  }
+  .sidebar-backdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.5);
+    z-index:39;
+  }
+  .sidebar-backdrop.show{display:block;}
+
+  @media (max-width: 760px){
+    header{padding:0 10px; gap:8px;}
+    .btn-menu{display:flex;}
+    .brand{font-size:14px; gap:6px;}
+    .brand span.hub{display:none;}
+    .repo-select{gap:6px; font-size:12px;}
+    .repo-select span{display:none;}
+    select{max-width:120px; font-size:12px; padding:6px 6px;}
+    #btn-logout{padding:6px 8px; font-size:12px;}
+    #btn-login{padding:6px 10px; font-size:13px;}
+
+    aside{
+      position:fixed;
+      top:52px; bottom:0; left:0;
+      width:78vw;
+      max-width:300px;
+      z-index:40;
+      transform:translateX(-100%);
+      transition:transform .2s ease;
+      box-shadow:2px 0 16px rgba(0,0,0,.4);
+    }
+    aside.open{transform:translateX(0);}
+
+    .editor-bar{padding:0 10px; gap:8px;}
+    .editor-bar .path{font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:38vw;}
+    .actions{gap:6px;}
+    .actions button{padding:6px 9px; font-size:12px;}
+    .status{display:none;}
+
+    .center-gate{padding:24px 20px;}
+    .center-gate h1{font-size:18px;}
+    .center-gate p{font-size:13px;}
+
+    .modal{padding:16px;}
+    .code-box{font-size:11.5px;}
+  }
+
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand"><span class="dot"></span>LuaHub<span class="hub">&nbsp;— скрипты для Roblox Studio</span></div>
+  <div style="display:flex; align-items:center; min-width:0;">
+    <button class="btn-menu" id="btn-menu" title="Файлы">☰</button>
+    <div class="brand"><span class="dot"></span>LuaHub<span class="hub">&nbsp;— скрипты для Roblox Studio</span></div>
+  </div>
   <div class="repo-select" id="repo-controls" style="display:none;">
     <span>Репозиторий:</span>
     <select id="repo-picker"></select>
@@ -260,6 +322,8 @@
   </div>
   <button id="btn-login" class="primary">Войти через GitHub</button>
 </header>
+
+<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
 <div class="workspace">
   <aside id="sidebar" style="display:none;">
@@ -533,6 +597,7 @@ async function openFile(path) {
   if (state.dirty && !confirm("Есть несохранённые изменения. Открыть другой файл без сохранения?")) {
     return;
   }
+  if (window.innerWidth <= 760) closeSidebar();
   $("#gate").style.display = "none";
   $("#editor-shell").style.display = "flex";
   $("#current-path").textContent = path;
@@ -661,6 +726,20 @@ $("#btn-copy-ls").onclick = () => {
   $("#btn-copy-ls").textContent = "Скопировано!";
   setTimeout(() => ($("#btn-copy-ls").textContent = "Скопировать"), 1200);
 };
+
+/* Мобильный сайдбар */
+function openSidebar() {
+  $("#sidebar").classList.add("open");
+  $("#sidebar-backdrop").classList.add("show");
+}
+function closeSidebar() {
+  $("#sidebar").classList.remove("open");
+  $("#sidebar-backdrop").classList.remove("show");
+}
+$("#btn-menu").onclick = () => {
+  $("#sidebar").classList.contains("open") ? closeSidebar() : openSidebar();
+};
+$("#sidebar-backdrop").onclick = closeSidebar;
 
 window.addEventListener("beforeunload", (e) => {
   if (state.dirty) {
