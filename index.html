@@ -335,6 +335,9 @@
       <input id="new-file-name" placeholder="имя.lua" />
       <button id="btn-new-file">+</button>
     </div>
+    <div class="new-file-row" style="padding-top:0;">
+      <input id="file-search" placeholder="Поиск по файлам…" />
+    </div>
     <div class="file-list" id="file-list"></div>
   </aside>
 
@@ -349,6 +352,8 @@
         <div class="path">Файл: <b id="current-path">—</b></div>
         <div class="actions">
           <span class="status" id="save-status"></span>
+          <button id="btn-pause" class="ghost">Пауза</button>
+          <button id="btn-delete" class="ghost" style="color:var(--danger); border-color:var(--danger);">Удалить</button>
           <button id="btn-loadstring" class="ghost">Loadstring</button>
           <button id="btn-save" class="primary" disabled>Сохранить</button>
         </div>
@@ -527,6 +532,54 @@ async function saveFileContent(path, content, sha) {
   });
 }
 
+async function deleteFileContent(path, sha) {
+  const { owner, name, defaultBranch } = state.currentRepo;
+  return gh(`/repos/${owner}/${name}/contents/${encodeURIComponent(path)}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: `Удаление ${path} через CatLua`,
+      sha,
+      branch: defaultBranch,
+    }),
+  });
+}
+
+// пытается прочитать файл, но не бросает ошибку если его нет (404)
+async function tryLoadFileContent(path) {
+  try {
+    return await loadFileContent(path);
+  } catch (e) {
+    return null;
+  }
+}
+
+const PAUSE_MARKER = "-- [CatLua:paused]";
+const PAUSE_PLACEHOLDER = `${PAUSE_MARKER}\n-- Этот файл нужен для сайта\n\nprint("The script is paused/updating")\n`;
+
+function backupPathFor(path) {
+  return path + ".catluabak";
+}
+
+async function pauseFile(path, sha, currentContent) {
+  const backupPath = backupPathFor(path);
+  // сохраняем текущий код в скрытый бэкап (не .lua — не попадает в список файлов)
+  const existingBackup = await tryLoadFileContent(backupPath);
+  await saveFileContent(backupPath, currentContent, existingBackup ? existingBackup.sha : null);
+  // подменяем сам файл плейсхолдером
+  return saveFileContent(path, PAUSE_PLACEHOLDER, sha);
+}
+
+async function resumeFile(path, sha) {
+  const backupPath = backupPathFor(path);
+  const backup = await tryLoadFileContent(backupPath);
+  if (!backup) throw new Error("Бэкап не найден — нечего восстанавливать");
+  const result = await saveFileContent(path, backup.content, sha);
+  // подчищаем бэкап после восстановления
+  await deleteFileContent(backupPath, backup.sha).catch(() => {});
+  return result;
+}
+
 /* =========================================================
    UI FLOW
    ========================================================= */
@@ -563,6 +616,7 @@ async function selectRepo(fullName) {
   state.currentRepo = { owner, name, defaultBranch: repoMeta.default_branch || "main" };
   setGate("Загрузка файлов…");
   await loadFiles();
+  await ensureMarkerFile();
   renderFileList();
   if (state.files.length) {
     openFile(state.files[0].path);
@@ -571,13 +625,36 @@ async function selectRepo(fullName) {
   }
 }
 
+// создаёт CatLua.lua в репозитории, если его там ещё нет
+const MARKER_FILE = "CatLua.lua";
+const MARKER_CONTENT = `-- Этот файл нужен для сайта\n\nprint("The script is paused/updating")\n`;
+async function ensureMarkerFile() {
+  const exists = state.files.some((f) => f.path === MARKER_FILE);
+  if (exists) return;
+  try {
+    await saveFileContent(MARKER_FILE, MARKER_CONTENT, null);
+    await loadFiles();
+  } catch (e) {
+    // не критично, если не удалось — просто продолжаем без него
+  }
+}
+
 function renderFileList() {
   const list = $("#file-list");
+  const query = ($("#file-search").value || "").trim().toLowerCase();
+  const filtered = query
+    ? state.files.filter((f) => f.path.toLowerCase().includes(query))
+    : state.files;
+
   if (!state.files.length) {
     list.innerHTML = `<div style="padding:10px; color:var(--text-dim); font-size:12.5px;">Файлов пока нет</div>`;
     return;
   }
-  list.innerHTML = state.files
+  if (!filtered.length) {
+    list.innerHTML = `<div style="padding:10px; color:var(--text-dim); font-size:12.5px;">Ничего не найдено</div>`;
+    return;
+  }
+  list.innerHTML = filtered
     .map(
       (f) => `<div class="file-item" data-path="${f.path}"><span class="ico">▸</span>${f.path}</div>`
     )
@@ -606,10 +683,11 @@ async function openFile(path) {
 
   try {
     const { content, sha } = await loadFileContent(path);
-    state.currentFile = { path, sha };
+    state.currentFile = { path, sha, paused: content.startsWith(PAUSE_MARKER) };
     state.dirty = false;
     $("#btn-save").disabled = true;
     setEditorContent(content);
+    updatePauseButton();
     setStatus("Загружено", "ok");
   } catch (e) {
     setStatus("Ошибка загрузки: " + e.message, "err");
@@ -656,6 +734,57 @@ async function createNewFile() {
     openFile(name);
   } catch (e) {
     setStatus("Ошибка создания: " + e.message, "err");
+  }
+}
+
+function updatePauseButton() {
+  const btn = $("#btn-pause");
+  if (!state.currentFile) return;
+  btn.textContent = state.currentFile.paused ? "Возобновить" : "Пауза";
+}
+
+async function togglePauseCurrentFile() {
+  if (!state.currentFile) return;
+  const { path, sha, paused } = state.currentFile;
+  const btn = $("#btn-pause");
+  btn.disabled = true;
+  setStatus(paused ? "Восстановление…" : "Ставим на паузу…", "");
+  try {
+    if (paused) {
+      await resumeFile(path, sha);
+    } else {
+      const currentContent = state.editor.getValue();
+      await pauseFile(path, sha, currentContent);
+    }
+    await openFile(path); // перезагружаем файл, чтобы подтянуть новое sha и содержимое
+    setStatus(paused ? "Файл восстановлен" : "Файл на паузе", "ok");
+  } catch (e) {
+    setStatus("Ошибка: " + e.message, "err");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteCurrentFile() {
+  if (!state.currentFile) return;
+  const { path, sha } = state.currentFile;
+  if (!confirm(`Удалить файл "${path}" безвозвратно?`)) return;
+  setStatus("Удаление…", "");
+  try {
+    await deleteFileContent(path, sha);
+    // на всякий случай подчищаем и бэкап, если он был
+    const backup = await tryLoadFileContent(backupPathFor(path));
+    if (backup) await deleteFileContent(backupPathFor(path), backup.sha).catch(() => {});
+    state.currentFile = null;
+    await loadFiles();
+    renderFileList();
+    if (state.files.length) {
+      openFile(state.files[0].path);
+    } else {
+      setGate("Файлов не осталось — создайте новый слева");
+    }
+  } catch (e) {
+    setStatus("Ошибка удаления: " + e.message, "err");
   }
 }
 
@@ -720,6 +849,9 @@ $("#new-file-name").addEventListener("keydown", (e) => {
   if (e.key === "Enter") createNewFile();
 });
 $("#btn-loadstring").onclick = showLoadstring;
+$("#btn-pause").onclick = togglePauseCurrentFile;
+$("#btn-delete").onclick = deleteCurrentFile;
+$("#file-search").addEventListener("input", renderFileList);
 $("#btn-close-ls").onclick = () => $("#ls-modal").classList.remove("show");
 $("#btn-copy-ls").onclick = () => {
   navigator.clipboard.writeText($("#ls-code").textContent);
